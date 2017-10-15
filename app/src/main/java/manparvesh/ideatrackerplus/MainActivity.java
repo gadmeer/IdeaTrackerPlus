@@ -57,8 +57,10 @@ import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.ivbaranov.mfb.MaterialFavoriteButton;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.mancj.materialsearchbar.MaterialSearchBar;
 import com.mikepenz.fontawesome_typeface_library.FontAwesome;
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
@@ -90,6 +92,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+//import manparvesh.ideatrackerplus.cloudsync.CloudSync;
+import manparvesh.ideatrackerplus.cloudsync.GdriveHelper;
 import manparvesh.ideatrackerplus.customviews.MyMaterialIntroView;
 import manparvesh.ideatrackerplus.customviews.NonSwipeableViewPager;
 import manparvesh.ideatrackerplus.customviews.ToolbarColorizeHelper;
@@ -107,6 +111,8 @@ import co.mobiwise.materialintro.prefs.PreferencesManager;
 import co.mobiwise.materialintro.shape.Focus;
 import co.mobiwise.materialintro.shape.FocusGravity;
 
+import static manparvesh.ideatrackerplus.cloudsync.GdriveHelper.RESOLVE_CONNECTION_REQUEST_CODE;
+
 public class MainActivity extends AppCompatActivity implements
         TextView.OnEditorActionListener,
         TextWatcher,
@@ -118,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements
         View.OnClickListener,
         View.OnLongClickListener {
 
+    private final GdriveHelper gdriveHelper = GdriveHelper.getInstance();
     // Database
     private DatabaseHelper mDbHelper;
 
@@ -200,7 +207,8 @@ public class MainActivity extends AppCompatActivity implements
         // Databases
         mTinyDB = new TinyDB(this);
         mDbHelper = DatabaseHelper.getInstance(this);
-
+        // Cloud Sync
+        gdriveHelper.setMainActivity(this);
         // App intro
         introOnFirstStart();
 
@@ -284,20 +292,39 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
 
-        //Speech reckognition
-        if (requestCode == VOICE_RECOGNITION_REQUEST_CODE && resultCode == RESULT_OK) {
-            ArrayList<String> matches = data.getStringArrayListExtra(
-                    RecognizerIntent.EXTRA_RESULTS);
+            //Speech reckognition
 
-            // Capitalize first letter
-            if (!matches.isEmpty()) {
-                StringBuilder capitalized = new StringBuilder(matches.get(0).toLowerCase());
-                capitalized.setCharAt(0, Character.toUpperCase(capitalized.charAt(0)));
 
-                // create idea dialog with the spoken text
-                newIdeaDialog(capitalized.toString());
-            }
+            case VOICE_RECOGNITION_REQUEST_CODE:
+                if (requestCode == VOICE_RECOGNITION_REQUEST_CODE && resultCode == RESULT_OK) {
+                    ArrayList<String> matches = data.getStringArrayListExtra(
+                            RecognizerIntent.EXTRA_RESULTS);
+
+                    // Capitalize first letter
+                    if (!matches.isEmpty()) {
+                        StringBuilder capitalized = new StringBuilder(matches.get(0).toLowerCase());
+                        capitalized.setCharAt(0, Character.toUpperCase(capitalized.charAt(0)));
+
+                        // create idea dialog with the spoken text
+                        newIdeaDialog(capitalized.toString());
+                    }
+                }
+                break;
+
+            case RESOLVE_CONNECTION_REQUEST_CODE:
+
+                if (resultCode == RESULT_OK) {
+                    gdriveHelper.getGoogleApiClient().connect();
+                    Toast.makeText(getApplicationContext(), "connect from activity", Toast.LENGTH_LONG).show();
+
+                }
+                else {
+                    GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+                    apiAvailability.getErrorString(resultCode);
+                }
+                break;
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -373,7 +400,9 @@ public class MainActivity extends AppCompatActivity implements
                         new PrimaryDrawerItem().withIdentifier(3).withName(R.string.new_pro).withIcon(FontAwesome.Icon.faw_plus).withSelectable(false),
                         new DividerDrawerItem(),
                         new ExpandableDrawerItem().withName(R.string.settings).withIcon(FontAwesome.Icon.faw_gear).withSelectable(false).withSubItems(
-                                doneSwitch, bigTextSwitch),
+                                doneSwitch, bigTextSwitch,
+                                new SecondaryDrawerItem().withName(R.string.cloudSync).withLevel(2).withIcon(GoogleMaterial.Icon.gmd_cloud).withIdentifier(31).withSelectable(false)
+                        ),
                         new ExpandableDrawerItem().withName(R.string.help_feedback).withIcon(FontAwesome.Icon.faw_question_circle).withSelectable(false).withSubItems(
                                 new SecondaryDrawerItem().withName(R.string.see_app_intro).withLevel(2).withIcon(GoogleMaterial.Icon.gmd_camera_rear).withIdentifier(8).withSelectable(false),
                                 new SecondaryDrawerItem().withName(R.string.activate_tuto).withLevel(2).withIcon(GoogleMaterial.Icon.gmd_info).withIdentifier(9).withSelectable(false),
@@ -555,6 +584,7 @@ public class MainActivity extends AppCompatActivity implements
 
     // DIALOG METHODS //
 
+
     // Shows an idea creation dialog
     public void newIdeaDialog() {
 
@@ -589,6 +619,52 @@ public class MainActivity extends AppCompatActivity implements
         }
 
     }
+
+
+
+    // Shows sync dialog
+    public void cloudSyncDialog() {
+
+        mNewIdeaDialog = new LovelyCustomDialog(this, R.style.EditTextTintTheme)
+                .setView(R.layout.cloud_sync)
+                .setTopColor(mPrimaryColor)
+                .setIcon(R.drawable.ic_bulb)
+                .setListener(R.id.cloud_connect_gdrive, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        gdriveHelper.getGoogleApiClient().connect();
+                    }
+                })
+                .setListener(R.id.cloud_backup, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                       Toast.makeText(MainActivity.this,"Creating Backup ...", Toast.LENGTH_LONG);
+                       gdriveHelper.backup();
+
+                    }
+                })
+                .show();
+
+        //get the view items
+//        mRadioGroup = (RadioGroup) mNewIdeaDialog.findViewById(R.id.radioGroup);
+//        mIdeaError = (TextView) mNewIdeaDialog.findViewById(R.id.new_error_message);
+//        mIdeaField = (EditText) mNewIdeaDialog.findViewById(R.id.editText);
+//        mNoteField = (EditText) mNewIdeaDialog.findViewById(R.id.editNote);
+//
+//        //set up listener for "ENTER" and text changed
+//        mIdeaField.addTextChangedListener(this);
+//        mIdeaField.setTag(1);
+//        mIdeaField.setOnEditorActionListener(this);
+//        mNoteField.setTag(2);
+//        mNoteField.setOnEditorActionListener(this);
+//
+//        //request focus on the edit text
+//        if (mIdeaField.requestFocus()) {
+//            mNewIdeaDialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+//        }
+
+    }
+
 
     private void sendIdeaFromDialog() {
         Switch doLater = (Switch) mNewIdeaDialog.findViewById(R.id.doLater);
@@ -693,6 +769,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
     }
+
 
     private void createProjectFromDialog() {
 
@@ -1710,6 +1787,7 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
+
     /**
      * Fragment adapter creating the right fragment for the right tab
      */
@@ -1979,6 +2057,10 @@ public class MainActivity extends AppCompatActivity implements
 
                 case 30: //Add project
                     newProjectDialog();
+                    return false;
+
+                case 31: //Cloud Sync seetings
+                    cloudSyncDialog();
                     return false;
 
             }
