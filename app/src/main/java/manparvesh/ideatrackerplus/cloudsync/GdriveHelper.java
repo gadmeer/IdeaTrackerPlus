@@ -109,7 +109,11 @@ public class GdriveHelper implements GoogleApiClient.ConnectionCallbacks, Google
                         return;
                     }
                     final DriveContents driveContents = result.getDriveContents();
-
+                    // lock databases
+                    
+                    //get I/O streams of database or database file
+                    //write with future
+                    //signal main thread that future is done
                     // Perform I/O off the UI thread.
                     new Thread() {
                         @Override

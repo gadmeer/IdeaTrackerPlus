@@ -111,6 +111,11 @@
     <string name="idea_menu_pref">firstIdeaMenu</string>
     <string name="save">Save</string>
     <string name="detailed_idea">Idea details</string>
+    <string name="cloud_connect_gdrive">Connect to GDrive</string>
+    <string name="cloud_backup">Backup to GDrive</string>
+    <string name="cloud_recovery">Recover from GDrive</string>
+    <string name="cloudSync">GDrive Sync</string>
+    <string name="cloud_last_sync">Last Sync:</string>
 
     <string-array name="array_from">
         <item>Done</item>

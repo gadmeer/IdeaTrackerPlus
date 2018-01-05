@@ -142,6 +142,7 @@ public class MainActivity extends AppCompatActivity implements
     private static final int ID_SOURCE_CODE = 12;
     private static final int ID_TOGGLE_BIG_TEXT = 20;
     private static final int ID_NEW_PROJECT_WITHOUT_SWITCH = 30;
+    private static final int ID_GDRIVE_SYNC = 31;
 
     private final GdriveHelper gdriveHelper = GdriveHelper.getInstance();
     // Database
@@ -431,7 +432,7 @@ public class MainActivity extends AppCompatActivity implements
                         new DividerDrawerItem(),
                         new ExpandableDrawerItem().withName(R.string.settings).withIcon(FontAwesome.Icon.faw_gear).withSelectable(false).withSubItems(
                                 doneSwitch, bigTextSwitch, darkSwitch,
-                                new SecondaryDrawerItem().withName(R.string.cloudSync).withLevel(2).withIcon(GoogleMaterial.Icon.gmd_cloud).withIdentifier(31).withSelectable(false)
+                                new SecondaryDrawerItem().withName(R.string.cloudSync).withLevel(2).withIcon(GoogleMaterial.Icon.gmd_cloud).withIdentifier(ID_GDRIVE_SYNC).withSelectable(false)
                         ),
                         new ExpandableDrawerItem().withName(R.string.help_feedback).withIcon(FontAwesome.Icon.faw_question_circle).withSelectable(false).withSubItems(
                                 new SecondaryDrawerItem().withName(R.string.see_app_intro).withLevel(2).withIcon(GoogleMaterial.Icon.gmd_camera_rear).withIdentifier(ID_SEE_APP_INTRO_AGAIN).withSelectable(false),
@@ -1946,7 +1947,7 @@ public class MainActivity extends AppCompatActivity implements
                     newProjectDialog();
                     return false;
 
-                case 31: //Cloud Sync seetings
+                case ID_GDRIVE_SYNC: //Cloud Sync seetings
                     cloudSyncDialog();
                     return false;
 
